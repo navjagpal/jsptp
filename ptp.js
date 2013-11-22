@@ -1,9 +1,13 @@
-var PtpUnpacker = function(raw) {
+goog.provide('ptp');
+goog.provide('ptp.PtpSession');
+goog.provide('ptp.PtpTransport');
+
+ptp.PtpUnpacker = function(raw) {
   this.raw = raw;
   this.offset = 0;
 };
 
-PtpUnpacker.prototype.unpack_string = function() {
+ptp.PtpUnpacker.prototype.unpack_string = function() {
   var dataView = new DataView(this.raw);
   var strLen = dataView.getInt8(0, true);
   this.offset += 1;
@@ -93,7 +97,7 @@ PtpValues.StandardResponses = {
   DEVICE_PROP_NOT_SUPPORTED: 0x200a
 };
 
-var PtpTransport = function(device, descriptor) {
+ptp.PtpTransport = function(device, descriptor) {
   this.device = device;
   this.sessionid = 0;
   this.bulkin = null;
@@ -113,14 +117,14 @@ var PtpTransport = function(device, descriptor) {
   }
 };
 
-PtpTransport.PTP_USB_CONTAINER_COMMAND = 1;
+ptp.PtpTransport.PTP_USB_CONTAINER_COMMAND = 1;
 
-PtpTransport.prototype.NewSession = function() {
+ptp.PtpTransport.prototype.NewSession = function() {
   this.sessionid += 1;
   return this.sessionid;
 };
 
-PtpTransport.prototype.check_ptp_event = function(sessionid, callback) {
+ptp.PtpTransport.prototype.check_ptp_event = function(sessionid, callback) {
   var transferInfo = {
     direction: 'in',
     endpoint: this.irqin,
@@ -152,7 +156,7 @@ PtpTransport.prototype.check_ptp_event = function(sessionid, callback) {
   });
 };
 
-PtpTransport.prototype.send_ptp_request = function(request, callback) {
+ptp.PtpTransport.prototype.send_ptp_request = function(request, callback) {
   var length = 12 + request.params.length * 4;
   var buffer = new ArrayBuffer(length);
   var dataView = new DataView(buffer);
@@ -178,7 +182,7 @@ PtpTransport.prototype.send_ptp_request = function(request, callback) {
   });
 };
 
-PtpTransport.prototype.decode_ptp_response = function(request, buffer) {
+ptp.PtpTransport.prototype.decode_ptp_response = function(request, buffer) {
   var dataView = new DataView(buffer);
   var dataSize = dataView.getUint32(0, true);
   var containerType = dataView.getUint16(4, true);
@@ -197,7 +201,7 @@ PtpTransport.prototype.decode_ptp_response = function(request, buffer) {
   return new PtpResponse(code, request.sessionid, transactionId, null);
 };
 
-PtpTransport.prototype.get_ptp_response = function(request, callback) {
+ptp.PtpTransport.prototype.get_ptp_response = function(request, callback) {
   var transferInfo = {
     direction: 'in',
     endpoint: this.bulkin,
@@ -216,7 +220,7 @@ PtpTransport.prototype.get_ptp_response = function(request, callback) {
   });
 };
 
-PtpTransport.prototype.get_ptp_data = function(request, stream, callback) {
+ptp.PtpTransport.prototype.get_ptp_data = function(request, stream, callback) {
   var transferInfo = {
     direction: 'in',
     endpoint: this.bulkin,
@@ -264,7 +268,7 @@ PtpTransport.prototype.get_ptp_data = function(request, stream, callback) {
   });
 };
 
-PtpTransport.prototype.ptp_simple_transaction = function(request, tx_data, receiving, callback) {
+ptp.PtpTransport.prototype.ptp_simple_transaction = function(request, tx_data, receiving, callback) {
   var transport = this;
   this.send_ptp_request(request, function(success) {
     if (!success) {
@@ -297,13 +301,13 @@ PtpTransport.prototype.ptp_simple_transaction = function(request, tx_data, recei
 };
 
 
-var PtpSession = function(transport) {
+ptp.PtpSession = function(transport) {
   this.transport = transport;
   this.sessionid = 0;
   this.transactionid = 0;
 };
 
-PtpSession.prototype.OpenSession = function(callback) {
+ptp.PtpSession.prototype.OpenSession = function(callback) {
   this.sessionid = this.transport.NewSession();
   this.transactionid = 0;
   var ptpRequest = new PtpRequest(
@@ -315,12 +319,12 @@ PtpSession.prototype.OpenSession = function(callback) {
   });
 };
 
-PtpSession.prototype.NewTransaction = function() {
+ptp.PtpSession.prototype.NewTransaction = function() {
   this.transactionid += 1;
   return this.transactionid;
 };
 
-PtpSession.prototype.GetObjectInfo = function(objectHandle, callback) {
+ptp.PtpSession.prototype.GetObjectInfo = function(objectHandle, callback) {
   var ptpRequest = new PtpRequest(PtpValues.StandardOperations.GET_OBJECT_INFO,
     this.sessionid, this.NewTransaction(), [objectHandle]);
   this.transport.ptp_simple_transaction(ptpRequest, null, true, function(
@@ -338,7 +342,7 @@ PtpSession.prototype.GetObjectInfo = function(objectHandle, callback) {
   }); 
 };
 
-PtpSession.prototype.GetObject = function(objectHandle, callback) {
+ptp.PtpSession.prototype.GetObject = function(objectHandle, callback) {
   var session = this;
   this.GetObjectInfo(objectHandle, function(objectInfo) {
     if (!objectInfo) {
@@ -371,11 +375,11 @@ PtpSession.prototype.GetObject = function(objectHandle, callback) {
   });
 };
 
-PtpSession.prototype.CheckForEvent = function(callback) {
+ptp.PtpSession.prototype.CheckForEvent = function(callback) {
   this.transport.check_ptp_event(this.sessionid, callback);
 };
 
-PtpSession.prototype.GetDevicePropValue = function(propertyId, isArray, fmt, callback) {
+ptp.PtpSession.prototype.GetDevicePropValue = function(propertyId, isArray, fmt, callback) {
   var ptpRequest = new PtpRequest(PtpValues.StandardOperations.GET_DEVICE_PROP_VALUE,
     this.sessionid, this.NewTransaction(), [propertyId]);
   this.transport.ptp_simple_transaction(ptpRequest, null, true, function(
@@ -393,18 +397,18 @@ PtpSession.prototype.GetDevicePropValue = function(propertyId, isArray, fmt, cal
   });
 };
 
-PtpSession.prototype.GetBatteryLevel = function(callback) {
+ptp.PtpSession.prototype.GetBatteryLevel = function(callback) {
   this.GetDevicePropValue(
     PtpValues.StandardProperties.BATTERY_LEVEL, false, 'B', callback);
 };
 
-PtpSession.prototype.GetDeviceFriendlyName = function(callback) {
+ptp.PtpSession.prototype.GetDeviceFriendlyName = function(callback) {
   this.GetDevicePropValue(
     PtpValues.StandardProperties.DEVICE_FRIENDLY_NAME, false, '_STR',
     callback);
 };
 
-PtpSession.prototype.Capture = function(callback) {
+ptp.PtpSession.prototype.Capture = function(callback) {
   var ptpRequest = new PtpRequest(PtpValues.StandardOperations.EOS_CAPTURE,
     this.sessionid, this.NewTransaction(), []);
   var session = this;
@@ -432,7 +436,7 @@ PtpSession.prototype.Capture = function(callback) {
    });
 };
 
-PtpSession.prototype.SetPCConnectMode = function(callback) {
+ptp.PtpSession.prototype.SetPCConnectMode = function(callback) {
   var ptpRequest = new PtpRequest(PtpValues.StandardOperations.EOS_SET_PC_CONNECT_MODE,
     this.sessionid, this.NewTransaction(), []);
   var session = this;
@@ -446,3 +450,5 @@ PtpSession.prototype.SetPCConnectMode = function(callback) {
     callback(true);
    });
 };
+
+goog.exportSymbol('ptp', ptp);
