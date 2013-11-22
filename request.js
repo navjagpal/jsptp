@@ -4,13 +4,17 @@
 
 goog.provide('ptp.Request');
 
-ptp.Request = function(opcode, sessionid, transactionid, params) {
+/**
+ * Represents a PTP Request message.
+ * @param {Number} opcode The operation code.
+ * @param {Number} sessionId The session id.
+ * @param {Number} transactionId The transaction id.
+ * @param {Array.<Object>} params Params to be included as part of the request.
+ * @constructor
+ */
+ptp.Request = function(opcode, sessionId, transactionId, params) {
   this.opcode = opcode;
   this.sessionid = sessionid;
   this.transactionid = transactionid;
   this.params = params;
-};
-
-ptp.Request.prototype.ToString = function() {
-  return 'blah';
 };
