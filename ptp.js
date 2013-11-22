@@ -2,6 +2,7 @@ goog.provide('ptp');
 goog.provide('ptp.PtpSession');
 goog.provide('ptp.PtpTransport');
 
+goog.require('ptp.Request');
 goog.require('ptp.Unpacker');
 
 var PtpObjectInfo = function(raw) {
@@ -18,17 +19,6 @@ var PtpEvent = function(eventcode, sessionid, transactionid, params) {
   this.sessionid = sessionid;
   this.transactionid = transactionid;
   this.params = params;
-};
-
-var PtpRequest = function(opcode, sessionid, transactionid, params) {
-  this.opcode = opcode;
-  this.sessionid = sessionid;
-  this.transactionid = transactionid;
-  this.params = params;
-};
-
-PtpRequest.prototype.ToString = function() {
-  return 'blah';
 };
 
 var PtpResponse = function(respcode, sessionid, transactionid, params) {
@@ -288,7 +278,7 @@ ptp.PtpSession = function(transport) {
 ptp.PtpSession.prototype.OpenSession = function(callback) {
   this.sessionid = this.transport.NewSession();
   this.transactionid = 0;
-  var ptpRequest = new PtpRequest(
+  var ptpRequest = new ptp.Request(
     PtpValues.StandardOperations.OPEN_SESSION, this.sessionid, this.transactionid,
     [this.sessionid]);
   this.transport.ptp_simple_transaction(ptpRequest, null, false, function(
@@ -303,7 +293,7 @@ ptp.PtpSession.prototype.NewTransaction = function() {
 };
 
 ptp.PtpSession.prototype.GetObjectInfo = function(objectHandle, callback) {
-  var ptpRequest = new PtpRequest(PtpValues.StandardOperations.GET_OBJECT_INFO,
+  var ptpRequest = new ptp.Request(PtpValues.StandardOperations.GET_OBJECT_INFO,
     this.sessionid, this.NewTransaction(), [objectHandle]);
   this.transport.ptp_simple_transaction(ptpRequest, null, true, function(
     ptpResponse, rx_data) {
@@ -328,7 +318,7 @@ ptp.PtpSession.prototype.GetObject = function(objectHandle, callback) {
       return;
     }
     console.log('About to fetch object of size: ' + objectInfo.ObjectCompressedSize);
-    var ptpRequest = new PtpRequest(PtpValues.StandardOperations.GET_OBJECT,
+    var ptpRequest = new ptp.PtpRequest(PtpValues.StandardOperations.GET_OBJECT,
       session.sessionid, session.NewTransaction(), [objectHandle]);
     session.transport.send_ptp_request(ptpRequest, function(result) {
       if (!result) {
@@ -358,7 +348,7 @@ ptp.PtpSession.prototype.CheckForEvent = function(callback) {
 };
 
 ptp.PtpSession.prototype.GetDevicePropValue = function(propertyId, isArray, fmt, callback) {
-  var ptpRequest = new PtpRequest(PtpValues.StandardOperations.GET_DEVICE_PROP_VALUE,
+  var ptpRequest = new ptp.PtpRequest(PtpValues.StandardOperations.GET_DEVICE_PROP_VALUE,
     this.sessionid, this.NewTransaction(), [propertyId]);
   this.transport.ptp_simple_transaction(ptpRequest, null, true, function(
     ptp_response, rx) {
@@ -387,7 +377,7 @@ ptp.PtpSession.prototype.GetDeviceFriendlyName = function(callback) {
 };
 
 ptp.PtpSession.prototype.Capture = function(callback) {
-  var ptpRequest = new PtpRequest(PtpValues.StandardOperations.EOS_CAPTURE,
+  var ptpRequest = new ptp.PtpRequest(PtpValues.StandardOperations.EOS_CAPTURE,
     this.sessionid, this.NewTransaction(), []);
   var session = this;
   this.transport.ptp_simple_transaction(ptpRequest, null, false, function(
@@ -415,7 +405,7 @@ ptp.PtpSession.prototype.Capture = function(callback) {
 };
 
 ptp.PtpSession.prototype.SetPCConnectMode = function(callback) {
-  var ptpRequest = new PtpRequest(PtpValues.StandardOperations.EOS_SET_PC_CONNECT_MODE,
+  var ptpRequest = new ptp.PtpRequest(PtpValues.StandardOperations.EOS_SET_PC_CONNECT_MODE,
     this.sessionid, this.NewTransaction(), []);
   var session = this;
   this.transport.ptp_simple_transaction(ptpRequest, null, false, function(
