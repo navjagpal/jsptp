@@ -109,6 +109,7 @@ ptp.Transport.prototype.CheckEvent = function(sessionId, callback) {
   };
   var transport = this;
   chrome.usb.bulkTransfer(this.device_, transferInfo, function(resultInfo) {
+    console.log('received event');
     if (resultInfo.resultCode != 0) {
       console.log('BulkTransfer Bad result code: ' + resultInfo.resultCode);
       callback(null);
@@ -191,6 +192,7 @@ ptp.Transport.prototype.DecodeResponse = function(request, buffer) {
     return null;
   }
   // TODO(nav): Read extra params.
+  console.log('Extra params?: ' + dataSize);
   return new ptp.Response(code, request.sessionId, transactionId, null);
 };
 
@@ -211,11 +213,36 @@ ptp.Transport.prototype.GetResponse = function(request, callback) {
     if (resultInfo.resultCode != 0) {
       console.log('BulkTransfer Bad result code: ' + resultInfo.resultCode);
       callback(null);
-      return;
     } else {
       callback(transport.DecodeResponse(request, resultInfo.data));
-      return;
     }
+  });
+};
+
+/**
+ * Writes raw data to the output stream.
+ * @param {Request} request
+ * @param {ArrayBuffer} buffer
+ * @param {function(boolean)} callback
+ */
+ptp.Transport.prototype.SendData = function(request, buffer, callback) {
+  var outBuffer = new ArrayBuffer(12 + buffer.byteLength);
+  var outDataView = new DataView(outBuffer);
+  outDataView.setUint32(0, 12 + buffer.byteLength, true);
+  outDataView.setUint16(4, ptp.Transport.USB_CONTAINER_DATA, true);
+  outDataView.setUint16(6, request.opcode, true);
+  outDataView.setUint32(8, request.transactionId, true);
+  var dataView = new DataView(buffer);
+  for (var i = 0; i < buffer.byteLength; i++) {
+    outDataView.setUint8(12 + i, dataView.getUint8(i));
+  }
+  var transferInfo = {
+    direction: 'out',
+    endpoint: this.bulkout_,
+    data: outBuffer
+  };
+  chrome.usb.bulkTransfer(this.device_, transferInfo, function(resultInfo) {
+    callback(resultInfo.resultCode == 0);
   });
 };
 
@@ -272,12 +299,11 @@ ptp.Transport.prototype.GetData = function(request, callback) {
 /**
  * Performs a simple and common Transaction.
  * @param {Request} request
- * @param {boolean} receiving Whether or not we expect to receive data as
- *  part of the Response. If so, the data will be supplied in the callback.
+ * @param {Object} info Transaction info, keys: receiving and data.
  * @param {function(Response, ArrayBuffer)} callback
  */
 ptp.Transport.prototype.SimpleTransaction = function(
-  request, receiving, callback) {
+  request, info, callback) {
   var transport = this;
   this.SendRequest(request, function(success) {
     if (!success) {
@@ -285,7 +311,15 @@ ptp.Transport.prototype.SimpleTransaction = function(
       return;
     }
 
-    if (receiving) {
+    if (info.data) {
+      transport.SendData(request, info.data, function() {
+        console.log('Sent data, now trying to get response');
+        transport.GetResponse(request, function(response) {
+          callback(response, null);
+        });
+      });
+    } else if (info.receiving) {
+      console.log('Receiving');
       transport.GetData(request, function(rx_data) {
         var response;
         if (rx_data instanceof ptp.Response) {

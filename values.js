@@ -18,7 +18,8 @@ ptp.Values.StandardEvents = {
  */
 ptp.Values.StandardProperties = {
   BATTERY_LEVEL: 0x5001,
-  DEVICE_FRIENDLY_NAME: 0xD402
+  DEVICE_FRIENDLY_NAME: 0xD402,
+  EOS_EVF_OUTPUT_DEVICE: 0xD1B0
 };
 
 /**
@@ -28,12 +29,14 @@ ptp.Values.StandardProperties = {
 ptp.Values.StandardOperations = {
   INITIATE_CAPTURE: 0x100e,
   GET_DEVICE_PROP_VALUE: 0x1015,
+  GET_DEVICE_INFO: 0x1001,
   EOS_CAPTURE: 0x910F,
   EOS_SET_PC_CONNECT_MODE: 0x9114,
   OPEN_SESSION: 0x1002,
   CLOSE_SESSION: 0x1003,
   GET_OBJECT: 0x1009,
-  GET_OBJECT_INFO: 0x1008
+  GET_OBJECT_INFO: 0x1008,
+  SET_DEVICE_PROP_VALUE: 0x1016
 };
 
 /**
@@ -50,7 +53,8 @@ ptp.Values.StandardObjectFormats = {
  */
 ptp.Values.StandardResponses = {
   OK: 0x2001,
-  DEVICE_PROP_NOT_SUPPORTED: 0x200a
+  DEVICE_PROP_NOT_SUPPORTED: 0x200a,
+  OBJECT_NOT_READY: 0xA102
 };
 
 goog.exportSymbol('ptp.Values');

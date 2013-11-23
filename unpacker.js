@@ -23,6 +23,8 @@ ptp.Unpacker = function(buffer) {
    * @private
    */
   this.offset_ = 0;
+
+  console.log('Buffer size: ' + buffer.byteLength);
 };
 
 /**
@@ -32,12 +34,42 @@ ptp.Unpacker = function(buffer) {
  */
 ptp.Unpacker.prototype.unpackString_ = function() {
   var dataView = new DataView(this.buffer_);
-  var strLen = dataView.getInt8(0, true);
+  var strLen = dataView.getInt8(this.offset_, true);
   this.offset_ += 1;
 
-  return String.fromCharCode.apply(null,
+  var s = String.fromCharCode.apply(null,
     new Uint16Array(this.buffer_.slice(
       this.offset_, this.offset_ + strLen * 2)));
+  this.offset_ += strLen * 2;
+  return s;
+};
+
+ptp.Unpacker.prototype.unpackUint32_ = function() {
+  var dataView = new DataView(this.buffer_);
+  var value = dataView.getUint32(this.offset_, true);
+  this.offset_ += 4;
+  return value;
+};
+
+ptp.Unpacker.prototype.unpackUint16_ = function() {
+  var dataView = new DataView(this.buffer_);
+  var value = dataView.getUint16(this.offset_, true);
+  this.offset_ += 2;
+  return value;
+};
+
+
+ptp.Unpacker.prototype.unpackArray = function(fmt) {
+  var dataView = new DataView(this.buffer_);
+  var arrayCount = dataView.getUint32(this.offset_, true);
+  this.offset_ += 4;
+  
+  var outputBuffer = new Array();
+  for (var i = 0; i < arrayCount; i++) {
+    outputBuffer.push(dataView.getUint16(this.offset_, true));
+    this.offset_ += 2;
+  }
+  return outputBuffer;
 };
 
 /**
@@ -49,7 +81,11 @@ ptp.Unpacker.prototype.unpackString_ = function() {
 ptp.Unpacker.prototype.unpackSimpletype = function(
   isArray, fmt) {
   if (!isArray) {
-    if (fmt == '_STR') {
+    if (fmt == 'H') {
+      return this.unpackUint16_();
+    } else if (fmt == 'I') {
+      return this.unpackUint32_();
+    } else if (fmt == '_STR') {
       return this.unpackString_();
     }
   }
