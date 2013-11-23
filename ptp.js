@@ -254,11 +254,10 @@ ptp.PtpTransport.prototype.ptp_simple_transaction = function(request, tx_data, r
         if (response == null) {
           transport.get_ptp_response(request, function(response) {
             callback(response, rx_data);
-            return;
           });
+        } else {
+          callback(response, rx_data);
         }
-        callback(response, rx_data);
-        return;
       });
     } else {
       transport.get_ptp_response(request, function(response) {
@@ -300,7 +299,7 @@ ptp.PtpSession.prototype.GetObjectInfo = function(objectHandle, callback) {
   this.transport.ptp_simple_transaction(ptpRequest, null, true, function(
     ptpResponse, rx_data) {
     if (!ptpResponse) {
-      console.log('No PtpResponse Code');
+      console.log('No PtpResponse Code GetObjectInfo');
       callback(null);
       return;
     }
@@ -330,7 +329,7 @@ ptp.PtpSession.prototype.GetObject = function(objectHandle, callback) {
       session.transport.get_ptp_data(ptpRequest, null, function(rx_data) {
         transport.get_ptp_response(ptpRequest, function(ptpResponse) {
           if (!ptpResponse) {
-            console.log('No PtpResponse Code');
+            console.log('No PtpResponse Code GetObject');
             callback(null);
             return;
           }
@@ -356,14 +355,12 @@ ptp.PtpSession.prototype.GetDevicePropValue = function(propertyId, isArray, fmt,
     ptp_response, rx) {
     if (ptp_response == null) {
       callback(null);
-      return;
-    }
-    if (ptp_response.respcode != PtpValues.StandardResponses.OK) {
+    } else if (ptp_response.respcode != PtpValues.StandardResponses.OK) {
       callback(null);
-      return;
+    } else {
+      var unpacker = new ptp.Unpacker(rx[1]);
+      callback(unpacker.unpackSimpletype(isArray, fmt));
     }
-    var unpacker = new ptp.Unpacker(rx[1]);
-    callback(unpacker.unpackSimpletype(isArray, fmt));
   });
 };
 
