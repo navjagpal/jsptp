@@ -4,16 +4,16 @@
 
 goog.provide('ptp.Values');
 
-Values.StandardEvents = {
+ptp.Values.StandardEvents = {
   OBJECT_ADDED: 0x4002
 };
 
-Values.StandardProperties = {
+ptp.Values.StandardProperties = {
   BATTERY_LEVEL: 0x5001,
   DEVICE_FRIENDLY_NAME: 0xD402
 };
 
-Values.StandardOperations = {
+ptp.Values.StandardOperations = {
   INITIATE_CAPTURE: 0x100e,
   GET_DEVICE_PROP_VALUE: 0x1015,
   EOS_CAPTURE: 0x910F,
@@ -24,11 +24,11 @@ Values.StandardOperations = {
   GET_OBJECT_INFO: 0x1008
 };
 
-Values.StandardObjectFormats = {
+ptp.Values.StandardObjectFormats = {
   EXIF_JPEG: 0x3801
 };
 
-Values.StandardResponses = {
+ptp.Values.StandardResponses = {
   OK: 0x2001,
   DEVICE_PROP_NOT_SUPPORTED: 0x200a
 };

@@ -5,11 +5,8 @@
 goog.provide('ptp.Transport');
 
 goog.require('ptp.Event');
-goog.require('ptp.Request');
 goog.require('ptp.Response');
-goog.require('ptp.ObjectInfo');
 goog.require('ptp.Values');
-goog.require('ptp.Unpacker');
 
 /**
  * Represents the PTP transport over chrome.USB.
@@ -149,7 +146,7 @@ ptp.Transport.prototype.decode_ptp_response = function(request, buffer) {
   return new ptp.Response(code, request.sessionId, transactionId, null);
 };
 
-ptp.Transport.prototype.get_ptp_response = function(request, callback) {
+ptp.Transport.prototype.GetPtpResponse = function(request, callback) {
   var transferInfo = {
     direction: 'in',
     endpoint: this.bulkin_,
@@ -168,7 +165,7 @@ ptp.Transport.prototype.get_ptp_response = function(request, callback) {
   });
 };
 
-ptp.Transport.prototype.get_ptp_data = function(request, stream, callback) {
+ptp.Transport.prototype.GetPtpData = function(request, stream, callback) {
   var transferInfo = {
     direction: 'in',
     endpoint: this.bulkin_,
@@ -216,7 +213,7 @@ ptp.Transport.prototype.get_ptp_data = function(request, stream, callback) {
   });
 };
 
-ptp.Transport.prototype.ptp_simple_transaction = function(request, tx_data, receiving, callback) {
+ptp.Transport.prototype.SimpleTransaction = function(request, tx_data, receiving, callback) {
   var transport = this;
   this.send_ptp_request(request, function(success) {
     if (!success) {
@@ -225,14 +222,14 @@ ptp.Transport.prototype.ptp_simple_transaction = function(request, tx_data, rece
     }
 
     if (receiving) {
-      transport.get_ptp_data(request, null, function(rx_data) {
+      transport.GetPtpData(request, null, function(rx_data) {
         var response;
         if (rx_data instanceof ptp.Response) {
           response = rx_data;
           rx_data = null;
         }
         if (response == null) {
-          transport.get_ptp_response(request, function(response) {
+          transport.GetPtpResponse(request, function(response) {
             callback(response, rx_data);
           });
         } else {
@@ -240,7 +237,7 @@ ptp.Transport.prototype.ptp_simple_transaction = function(request, tx_data, rece
         }
       });
     } else {
-      transport.get_ptp_response(request, function(response) {
+      transport.GetPtpResponse(request, function(response) {
         callback(response, null);
       });
     }
