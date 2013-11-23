@@ -86,6 +86,7 @@ ptp.Transport.USB_CONTAINER_RESPONSE = 3;
  */
 ptp.Transport.USB_CONTAINER_EVENT = 4;
 
+
 /**
  * Creates and returns a new PTP Session id.
  * @return {number} New session id.

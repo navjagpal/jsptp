@@ -2,19 +2,12 @@
  * @fileoverview Object info.
  */
 
-<<<<<<< HEAD
 goog.provide('ptp.ObjectInfo');
-=======
-goog.provide('ptp.ObjectInfo'); 
->>>>>>> f1d1217677957a400b2480df057d49899a97d2b2
 
 /**
  * Represents object information.
  * @param {ArrayBuffer} buffer Raw byte array.
-<<<<<<< HEAD
  * @constructor
-=======
->>>>>>> f1d1217677957a400b2480df057d49899a97d2b2
  */
 ptp.ObjectInfo = function(buffer) {
   // TODO(nav): There are a bunch of fields here.
