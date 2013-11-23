@@ -3,6 +3,7 @@
  * transport mechanism aside from assuming an async API.
  */
 
+goog.provide('ptp');
 goog.provide('ptp.Session');
 
 goog.require('ptp.Event');
@@ -28,7 +29,7 @@ ptp.Session.prototype.OpenSession = function(callback) {
   var ptpRequest = new ptp.Request(
     ptp.Values.StandardOperations.OPEN_SESSION, this.sessionid, this.transactionid,
     [this.sessionid]);
-  this.transport.ptp_simple_transaction(ptpRequest, null, false, function(
+  this.transport.SimpleTransaction(ptpRequest, null, false, function(
     ptpResponse, rx) {
     callback(ptpResponse.respcode == ptp.Values.StandardResponses.OK);
   });
@@ -42,7 +43,7 @@ ptp.Session.prototype.NewTransaction = function() {
 ptp.Session.prototype.GetObjectInfo = function(objectHandle, callback) {
   var ptpRequest = new ptp.Request(ptp.Values.StandardOperations.GET_OBJECT_INFO,
     this.sessionid, this.NewTransaction(), [objectHandle]);
-  this.transport.ptp_simple_transaction(ptpRequest, null, true, function(
+  this.transport.SimpleTransaction(ptpRequest, null, true, function(
     ptpResponse, rx_data) {
     if (!ptpResponse) {
       console.log('No PtpResponse Code GetObjectInfo');
@@ -72,8 +73,8 @@ ptp.Session.prototype.GetObject = function(objectHandle, callback) {
         callback(null);
         return;
       }
-      session.transport.get_ptp_data(ptpRequest, null, function(rx_data) {
-        transport.get_ptp_response(ptpRequest, function(ptpResponse) {
+      session.transport.GetPtpData(ptpRequest, null, function(rx_data) {
+        transport.GetPtpResponse(ptpRequest, function(ptpResponse) {
           if (!ptpResponse) {
             console.log('No PtpResponse Code GetObject');
             callback(null);
@@ -97,7 +98,7 @@ ptp.Session.prototype.CheckForEvent = function(callback) {
 ptp.Session.prototype.GetDevicePropValue = function(propertyId, isArray, fmt, callback) {
   var ptpRequest = new ptp.Request(ptp.Values.StandardOperations.GET_DEVICE_PROP_VALUE,
     this.sessionid, this.NewTransaction(), [propertyId]);
-  this.transport.ptp_simple_transaction(ptpRequest, null, true, function(
+  this.transport.SimpleTransaction(ptpRequest, null, true, function(
     ptp_response, rx) {
     if (ptp_response == null) {
       callback(null);
@@ -125,7 +126,7 @@ ptp.Session.prototype.Capture = function(callback) {
   var ptpRequest = new ptp.Request(ptp.Values.StandardOperations.EOS_CAPTURE,
     this.sessionid, this.NewTransaction(), []);
   var session = this;
-  this.transport.ptp_simple_transaction(ptpRequest, null, false, function(
+  this.transport.SimpleTransaction(ptpRequest, null, false, function(
     ptpResponse, tx) {
     if (!ptpResponse) {
       console.log('No PTPResponse');
@@ -153,7 +154,7 @@ ptp.Session.prototype.SetPCConnectMode = function(callback) {
   var ptpRequest = new ptp.Request(ptp.Values.StandardOperations.EOS_SET_PC_CONNECT_MODE,
     this.sessionid, this.NewTransaction(), []);
   var session = this;
-  this.transport.ptp_simple_transaction(ptpRequest, null, false, function(
+  this.transport.SimpleTransaction(ptpRequest, null, false, function(
     ptpResponse, tx) {
     console.log('RespCode for PC Connect:' + ptpResponse.respcode);
     if (ptpResponse.respcode != ptp.Values.StandardResponses.OK) {
