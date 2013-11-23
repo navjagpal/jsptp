@@ -3,6 +3,7 @@ goog.provide('ptp.PtpSession');
 goog.provide('ptp.PtpTransport');
 
 goog.require('ptp.Request');
+goog.require('ptp.Response');
 goog.require('ptp.Unpacker');
 
 var PtpObjectInfo = function(raw) {
@@ -20,17 +21,6 @@ var PtpEvent = function(eventcode, sessionid, transactionid, params) {
   this.transactionid = transactionid;
   this.params = params;
 };
-
-var PtpResponse = function(respcode, sessionid, transactionid, params) {
-  this.respcode = respcode;
-  this.sessionid = sessionid;
-  this.transactionid = transactionid;
-  this.params = params;
-};
-
-PtpResponse.prototype.ToString = function() {
-  return 'blah';
-}
 
 function PtpValues() {
    
@@ -166,7 +156,7 @@ ptp.PtpTransport.prototype.decode_ptp_response = function(request, buffer) {
     throw "Wrong container type: " + containerType;
   }
   // TODO(nav): Read extra params.
-  return new PtpResponse(code, request.sessionId, transactionId, null);
+  return new ptp.Response(code, request.sessionId, transactionId, null);
 };
 
 ptp.PtpTransport.prototype.get_ptp_response = function(request, callback) {
@@ -247,7 +237,7 @@ ptp.PtpTransport.prototype.ptp_simple_transaction = function(request, tx_data, r
     if (receiving) {
       transport.get_ptp_data(request, null, function(rx_data) {
         var response;
-        if (rx_data instanceof PtpResponse) {
+        if (rx_data instanceof ptp.Response) {
           response = rx_data;
           rx_data = null;
         }
