@@ -70,7 +70,7 @@ ptp.Transport.USB_CONTAINER_COMMAND = 1;
  * @const
  * @type {number}
  */
-ptp.Transport.USB_CONTAINER_COMMAND = 2;
+ptp.Transport.USB_CONTAINER_DATA = 2;
 
 /**
  * Response container type.
@@ -84,8 +84,7 @@ ptp.Transport.USB_CONTAINER_RESPONSE = 3;
  * @const
  * @type {number}
  */
-ptp.Transport.USB_CONTAINER_COMMAND = 4;
-
+ptp.Transport.USB_CONTAINER_EVENT = 4;
 
 /**
  * Creates and returns a new PTP Session id.

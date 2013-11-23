@@ -10,6 +10,10 @@ goog.provide('ptp.Event');
  * @param {Number} sessionid Session id.
  * @param {Number} transactionid Transacation id.
  * @param {Array.<Object>} params Params associated with the event.
+<<<<<<< HEAD
+ * @constructor
+=======
+>>>>>>> f1d1217677957a400b2480df057d49899a97d2b2
  */
 ptp.Event = function(eventcode, sessionid, transactionid, params) {
   this.eventcode = eventcode;
