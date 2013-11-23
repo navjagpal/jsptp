@@ -46,7 +46,7 @@ ptp.Unpacker.prototype.unpackString_ = function() {
  * @param {String} fmt Format string describing the data to unpack.
  * @return {Object} The unpacked data.
  */
-Unpacker.prototype.unpackSimpletype = function(
+ptp.Unpacker.prototype.unpackSimpletype = function(
   isArray, fmt) {
   if (!isArray) {
     if (fmt == '_STR') {
@@ -54,3 +54,5 @@ Unpacker.prototype.unpackSimpletype = function(
     }
   }
 };
+
+goog.exportSymbol('ptp.Unpacker');

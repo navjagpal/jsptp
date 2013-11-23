@@ -129,7 +129,7 @@ ptp.PtpTransport.prototype.send_ptp_request = function(request, callback) {
   var buffer = new ArrayBuffer(length);
   var dataView = new DataView(buffer);
   dataView.setUint32(0, length, true);
-  dataView.setUint16(4, PtpTransport.PTP_USB_CONTAINER_COMMAND, true);
+  dataView.setUint16(4, ptp.PtpTransport.PTP_USB_CONTAINER_COMMAND, true);
   dataView.setUint16(6, request.opcode, true);
   dataView.setUint32(8, request.transactionid, true);
   var pos = 12;
@@ -268,7 +268,9 @@ ptp.PtpTransport.prototype.ptp_simple_transaction = function(request, tx_data, r
   });
 };
 
-
+/**
+ * @constructor
+ */
 ptp.PtpSession = function(transport) {
   this.transport = transport;
   this.sessionid = 0;
@@ -318,7 +320,7 @@ ptp.PtpSession.prototype.GetObject = function(objectHandle, callback) {
       return;
     }
     console.log('About to fetch object of size: ' + objectInfo.ObjectCompressedSize);
-    var ptpRequest = new ptp.PtpRequest(PtpValues.StandardOperations.GET_OBJECT,
+    var ptpRequest = new ptp.Request(PtpValues.StandardOperations.GET_OBJECT,
       session.sessionid, session.NewTransaction(), [objectHandle]);
     session.transport.send_ptp_request(ptpRequest, function(result) {
       if (!result) {
@@ -348,7 +350,7 @@ ptp.PtpSession.prototype.CheckForEvent = function(callback) {
 };
 
 ptp.PtpSession.prototype.GetDevicePropValue = function(propertyId, isArray, fmt, callback) {
-  var ptpRequest = new ptp.PtpRequest(PtpValues.StandardOperations.GET_DEVICE_PROP_VALUE,
+  var ptpRequest = new ptp.Request(PtpValues.StandardOperations.GET_DEVICE_PROP_VALUE,
     this.sessionid, this.NewTransaction(), [propertyId]);
   this.transport.ptp_simple_transaction(ptpRequest, null, true, function(
     ptp_response, rx) {
@@ -377,7 +379,7 @@ ptp.PtpSession.prototype.GetDeviceFriendlyName = function(callback) {
 };
 
 ptp.PtpSession.prototype.Capture = function(callback) {
-  var ptpRequest = new ptp.PtpRequest(PtpValues.StandardOperations.EOS_CAPTURE,
+  var ptpRequest = new ptp.Request(PtpValues.StandardOperations.EOS_CAPTURE,
     this.sessionid, this.NewTransaction(), []);
   var session = this;
   this.transport.ptp_simple_transaction(ptpRequest, null, false, function(
@@ -405,7 +407,7 @@ ptp.PtpSession.prototype.Capture = function(callback) {
 };
 
 ptp.PtpSession.prototype.SetPCConnectMode = function(callback) {
-  var ptpRequest = new ptp.PtpRequest(PtpValues.StandardOperations.EOS_SET_PC_CONNECT_MODE,
+  var ptpRequest = new ptp.Request(PtpValues.StandardOperations.EOS_SET_PC_CONNECT_MODE,
     this.sessionid, this.NewTransaction(), []);
   var session = this;
   this.transport.ptp_simple_transaction(ptpRequest, null, false, function(
@@ -419,4 +421,6 @@ ptp.PtpSession.prototype.SetPCConnectMode = function(callback) {
    });
 };
 
-goog.exportSymbol('ptp', ptp);
+goog.exportSymbol('ptp.PtpSession');
+goog.exportSymbol('ptp.PtpTransport');
+
