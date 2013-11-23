@@ -2,7 +2,7 @@
  * @fileoverview Response implementation.
  */
 
-goog.provide('ptp.Response);
+goog.provide('ptp.Response');
 
 /**
  * Represents a PTP Response message.
@@ -18,3 +18,5 @@ ptp.Response = function(respcode, sessionId, transactionId, params) {
   this.transactionId = transactionId;
   this.params = params;
 };
+
+goog.exportSymbol('ptp.Response');
