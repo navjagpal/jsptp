@@ -131,7 +131,7 @@ ptp.PtpTransport.prototype.send_ptp_request = function(request, callback) {
   dataView.setUint32(0, length, true);
   dataView.setUint16(4, ptp.PtpTransport.PTP_USB_CONTAINER_COMMAND, true);
   dataView.setUint16(6, request.opcode, true);
-  dataView.setUint32(8, request.transactionid, true);
+  dataView.setUint32(8, request.transactionId, true);
   var pos = 12;
   for (var i = 0; i < request.params.length; i++) {
     dataView.setUint32(pos, request.params[i], true);
@@ -143,7 +143,7 @@ ptp.PtpTransport.prototype.send_ptp_request = function(request, callback) {
     endpoint: this.bulkout,
     data: buffer
   };
-  console.log('Sending data for ' + request.transactionid);
+  console.log('Sending data for ' + request.transactionId);
   chrome.usb.bulkTransfer(this.device, transferInfo, function(resultInfo) {
     console.log('BulkTransfer send result code:' + resultInfo.resultCode);
     callback(resultInfo.resultCode == 0);
@@ -156,9 +156,9 @@ ptp.PtpTransport.prototype.decode_ptp_response = function(request, buffer) {
   var containerType = dataView.getUint16(4, true);
   var code = dataView.getUint16(6, true);
   var transactionId = dataView.getUint32(8, true);
-  if (transactionId != request.transactionid) {
+  if (transactionId != request.transactionId) {
     console.log('Mismatching transactionId: ' + transactionId + ' -> ' +
-      request.transactionid);
+      request.transactionId);
     throw "Mismatching transactionId";
   }
   if (containerType != 3) {
@@ -166,7 +166,7 @@ ptp.PtpTransport.prototype.decode_ptp_response = function(request, buffer) {
     throw "Wrong container type: " + containerType;
   }
   // TODO(nav): Read extra params.
-  return new PtpResponse(code, request.sessionid, transactionId, null);
+  return new PtpResponse(code, request.sessionId, transactionId, null);
 };
 
 ptp.PtpTransport.prototype.get_ptp_response = function(request, callback) {
@@ -218,7 +218,7 @@ ptp.PtpTransport.prototype.get_ptp_data = function(request, stream, callback) {
         if (code != request.opcode) {
           throw "Unexpected PTP usb opcode";
         }
-        if (transactionId != request.transactionid) {
+        if (transactionId != request.transactionId) {
           throw "Unexpected PTP USB transaction id";
         }
         dataSize -= 12;

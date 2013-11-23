@@ -14,8 +14,8 @@ goog.provide('ptp.Request');
  */
 ptp.Request = function(opcode, sessionId, transactionId, params) {
   this.opcode = opcode;
-  this.sessionid = sessionId;
-  this.transactionid = transactionId;
+  this.sessionId = sessionId;
+  this.transactionId = transactionId;
   this.params = params;
 };
 
