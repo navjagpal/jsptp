@@ -4,15 +4,27 @@
 
 goog.provide('ptp.Values');
 
+/**
+ * Enum for events.
+ * @enum {number}
+ */
 ptp.Values.StandardEvents = {
   OBJECT_ADDED: 0x4002
 };
 
+/**
+ * Enum for properties.
+ * @enum {number}
+ */
 ptp.Values.StandardProperties = {
   BATTERY_LEVEL: 0x5001,
   DEVICE_FRIENDLY_NAME: 0xD402
 };
 
+/**
+ * Enum for operations.
+ * @enum {number}
+ */
 ptp.Values.StandardOperations = {
   INITIATE_CAPTURE: 0x100e,
   GET_DEVICE_PROP_VALUE: 0x1015,
@@ -24,10 +36,18 @@ ptp.Values.StandardOperations = {
   GET_OBJECT_INFO: 0x1008
 };
 
+/**
+ * Enum for object formats.
+ * @enum {number}
+ */
 ptp.Values.StandardObjectFormats = {
   EXIF_JPEG: 0x3801
 };
 
+/**
+ * Enum for response codes.
+ * @enum {number}
+ */
 ptp.Values.StandardResponses = {
   OK: 0x2001,
   DEVICE_PROP_NOT_SUPPORTED: 0x200a
