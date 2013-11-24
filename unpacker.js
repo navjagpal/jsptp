@@ -62,12 +62,16 @@ ptp.Unpacker.prototype.unpackUint16_ = function() {
 ptp.Unpacker.prototype.unpackArray = function(fmt) {
   var dataView = new DataView(this.buffer_);
   var arrayCount = dataView.getUint32(this.offset_, true);
+  console.log('Array count: ' + arrayCount);
   this.offset_ += 4;
   
   var outputBuffer = new Array();
   for (var i = 0; i < arrayCount; i++) {
-    outputBuffer.push(dataView.getUint16(this.offset_, true));
-    this.offset_ += 2;
+    if (fmt == 'H') {
+      outputBuffer.push(this.unpackUint16_());
+    } else if (fmt == 'I') {
+      outputBuffer.push(this.unpackUint32_());
+    }
   }
   return outputBuffer;
 };

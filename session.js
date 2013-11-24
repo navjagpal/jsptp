@@ -7,6 +7,8 @@ goog.provide('ptp');
 goog.provide('ptp.Session');
 
 goog.require('ptp.DeviceInfo');
+goog.require('ptp.DevicePropertyInfo');
+goog.require('ptp.EOSDeviceInfo');
 goog.require('ptp.Event');
 goog.require('ptp.ObjectInfo');
 goog.require('ptp.Request');
@@ -160,6 +162,22 @@ ptp.Session.prototype.GetDevicePropValue = function(
   });
 };
 
+ptp.Session.prototype.GetDevicePropInfo = function(
+  propertyId, callback) {
+  var request = new ptp.Request(
+    ptp.Values.StandardOperations.GET_DEVICE_PROP_DESC,
+    this.sessionid_, this.NewTransaction(), [propertyId]);
+  this.transport_.SimpleTransaction(request, {receiving: true},
+    function(response, rx) {
+      if (response && response.respcode == ptp.Values.StandardResponses.OK) {
+        callback(new ptp.DevicePropertyInfo(rx[1]));
+      } else {
+        console.log('Bad response: ' + response.respcode);
+        callback(null);
+      }
+   });
+};
+
 ptp.Session.prototype.SetDevicePropValue = function(
   propertyId, fmt, value, callback) {
   var buffer = new ArrayBuffer(4);
@@ -181,7 +199,7 @@ ptp.Session.prototype.SetEOSDevicePropValue = function(
   var dataView = new DataView(buffer);
   dataView.setUint32(0, value, true);
   var ptpRequest = new ptp.Request(
-    0x9110,
+    ptp.Values.EOSOperations.SET_EOS_DEVICE_PROP_VALUE,
     this.sessionid_, this.NewTransaction(), [propertyId]);
   this.transport_.SimpleTransaction(ptpRequest,
     {receiving: false, data: buffer}, function(ptpResponse, rx) {
@@ -194,9 +212,9 @@ ptp.Session.prototype.SetEOSDevicePropValue = function(
 };
 
 ptp.Session.prototype.GetOutputValue = function(callback) {
-  this.GetDevicePropValue(
-    ptp.Values.StandardProperties.EOS_EVF_OUTPUT_DEVICE, false,
-    'H', function(v) {
+  this.GetDevicePropInfo(
+    ptp.Values.EOSProperties.EOS_EVF_OUTPUT_DEVICE, 
+    function(v) {
     console.log('value: ' + v);
     callback(v); 
   });
@@ -204,7 +222,7 @@ ptp.Session.prototype.GetOutputValue = function(callback) {
 
 ptp.Session.prototype.SetOutputValue = function(value, callback) {
   this.SetEOSDevicePropValue(
-    ptp.Values.StandardProperties.EOS_EVF_OUTPUT_DEVICE,
+    ptp.Values.EOSProperties.EOS_EVF_OUTPUT_DEVICE,
     'H', value, callback); 
 };
 
@@ -224,7 +242,7 @@ ptp.Session.prototype.GetDeviceFriendlyName = function(callback) {
  */
 ptp.Session.prototype.Capture = function(callback) {
   var ptpRequest = new ptp.Request(
-    ptp.Values.StandardOperations.EOS_CAPTURE,
+    ptp.Values.EOSOperations.EOS_CAPTURE,
     this.sessionid_, this.NewTransaction(), []);
   var session = this;
   this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
@@ -287,10 +305,10 @@ ptp.Session.prototype.LiveView = function(callback) {
  * Sets up the device for PC Connect Mode.
  * @param {function(boolean)} callback
  */
-ptp.Session.prototype.SetPCConnectMode = function(callback) {
+ptp.Session.prototype.SetPCConnectMode = function(mode, callback) {
   var ptpRequest = new ptp.Request(
-    ptp.Values.StandardOperations.EOS_SET_PC_CONNECT_MODE,
-    this.sessionid_, this.NewTransaction(), []);
+    ptp.Values.EOSOperations.EOS_SET_PC_CONNECT_MODE,
+    this.sessionid_, this.NewTransaction(), [mode]);
   this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
     function(ptpResponse, tx) {
     callback(ptpResponse.respcode == ptp.Values.StandardResponses.OK);
@@ -306,6 +324,21 @@ ptp.Session.prototype.GetDeviceInfo = function(callback) {
     console.log('Have response from getdevice');
     if (response && response.respcode == ptp.Values.StandardResponses.OK) {
       callback(new ptp.DeviceInfo(rx[1]));
+    } else {
+      callback(null);
+    }
+  });
+};
+
+ptp.Session.prototype.GetEOSDeviceInfo = function(callback) {
+  var request = new ptp.Request(
+    ptp.Values.StandardOperations.GET_EOS_DEVICE_INFO,
+    this.sessionid_, this.NewTransaction(), []);
+  this.transport_.SimpleTransaction(request, {receiving: true},
+    function(response, rx) {
+    console.log('Have response from getdevice');
+    if (response && response.respcode == ptp.Values.StandardResponses.OK) {
+      callback(new ptp.EOSDeviceInfo(rx[1]));
     } else {
       callback(null);
     }
