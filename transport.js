@@ -108,6 +108,7 @@ ptp.Transport.prototype.CheckEvent = function(sessionId, callback) {
     length: 1024 * 1024 * 10
   };
   var transport = this;
+  console.log('Waiting for event');
   chrome.usb.bulkTransfer(this.device_, transferInfo, function(resultInfo) {
     console.log('received event');
     if (resultInfo.resultCode != 0) {
@@ -153,6 +154,7 @@ ptp.Transport.prototype.SendRequest = function(request, callback) {
     dataView.setUint32(pos, request.params[i], true);
     pos += 4;
   }
+  console.log('Sending data of size: ' + length);
 
   var transferInfo = {
     direction: 'out',

@@ -110,7 +110,7 @@ ptp.DevicePropertyInfo = function(buffer) {
 ptp.DevicePropertyInfo.prototype.toString = function() {
   var strings = [];
   for (var key in this) {
-    if (this.hasOwnProperty(key) {
+    if (this.hasOwnProperty(key)) {
       strings.push(key + ' : ' + this[key]);
     }
   }

@@ -136,6 +136,18 @@ ptp.Session.prototype.CheckForEvent = function(callback) {
   this.transport_.CheckEvent(this.sessionid_, callback);
 };
 
+ptp.Session.prototype.CheckForEOSEvent = function(callback) {
+  var request = new ptp.Request(
+    ptp.Values.EOSOperations.GET_EVENT,
+    this.sessionid_, this.NewTransaction(), []);
+  this.transport_.SimpleTransaction(request, {receiving: true},
+    function(ptpResponse, rx) {
+      console.log('EOS event response: ' + ptpResponse);
+      console.log('EOS event data: ' + rx);
+      callback(ptpResponse);
+  });
+};
+
 /**
  * Reads and returns the value associated with the device property.
  * @param {number} propertyId
@@ -207,12 +219,14 @@ ptp.Session.prototype.SetDevicePropValue = function(
 
 ptp.Session.prototype.SetEOSDevicePropValue = function(
   propertyId, fmt, value, callback) {
-  var buffer = new ArrayBuffer(4);
+  var buffer = new ArrayBuffer(12);
   var dataView = new DataView(buffer);
-  dataView.setUint32(0, value, true);
+  dataView.setUint32(0, 12, true);
+  dataView.setUint32(4, propertyId, true);
+  dataView.setUint32(8, value, true);
   var ptpRequest = new ptp.Request(
     ptp.Values.EOSOperations.SET_DEVICE_PROP_VALUE,
-    this.sessionid_, this.NewTransaction(), [propertyId]);
+    this.sessionid_, this.NewTransaction(), []);
   this.transport_.SimpleTransaction(ptpRequest,
     {receiving: false, data: buffer}, function(ptpResponse, rx) {
     if (ptpResponse) {
@@ -244,6 +258,12 @@ ptp.Session.prototype.GetCaptureDestination = function(callback) {
 ptp.Session.prototype.SetOutputValue = function(value, callback) {
   this.SetEOSDevicePropValue(
     ptp.Values.EOSProperties.EOS_EVF_OUTPUT_DEVICE,
+    'H', value, callback);
+};
+
+ptp.Session.prototype.SetCaptureDestination = function(value, callback) {
+  this.SetEOSDevicePropValue(
+    ptp.Values.EOSProperties.CAPTURE_DESTINATION,
     'H', value, callback);
 };
 
@@ -289,37 +309,27 @@ ptp.Session.prototype.Capture = function(callback) {
    });
 };
 
+/**
+ * Returns small preview(s) from the viewfinder. This method can be used to
+ * create something that looks like a video stream or a live preview.
+ * @param {function(data)} callback The data will be of the potentially
+ *  repeated format of [4-byte length, 4-byte type, data]. The length field
+ *  includes the length of the 8 byte header. This means the data is really
+ *  length - 8 bytes in length.
+ */
 ptp.Session.prototype.LiveView = function(callback) {
   var session = this;
+  /* Found this magic constant from gphoto2. */
   var ptpRequest = new ptp.Request(0x9153,
-    session.sessionid_, session.NewTransaction(), []);
+    session.sessionid_, session.NewTransaction(), [0x00100000]);
   session.transport_.SimpleTransaction(ptpRequest, {receiving: true},
-    function(ptpResponse, tx) {
-    console.log('Return from ST in LiveView');
-    if (!ptpResponse) {
-      console.log('No PTPResponse');
-      callback(null);
-      return;
-    } else if (ptpResponse.respcode ==
-               ptp.Values.StandardResponses.OBJECT_NOT_READY) {
-      console.log('OBject not found');
-    } else if (ptpResponse.respcode != ptp.Values.StandardResponses.OK &&
-               ptpResponse.respcode !=
-               ptp.Values.StandardResponses.OBJECT_NOT_READY) {
-      console.log('Not OK RespCode for LiveView:' + ptpResponse.respcode);
-      callback(null);
+    function(response, rx) {
+    if (response &&
+        response.respcode ==
+        response.respcode != ptp.Values.StandardResponses.OK) {
+      callback(rx[1]);
     } else {
-      console.log('Waiting for event: ' + ptpResponse.respcode);
-      session.CheckForEvent(function(ptpEvent) {
-        if (ptpEvent.eventcode == ptp.Values.StandardEvents.OBJECT_ADDED) {
-          console.log('Event::Object added');
-          var objectId = ptpEvent.params[0];
-          session.GetObject(objectId, callback);
-        } else {
-          console.log('No event?');
-          callback(null);
-        }
-      });
+      callback(null);
     }
   });
 };
