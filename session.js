@@ -16,6 +16,7 @@ goog.require('ptp.Response');
 goog.require('ptp.Transport');
 goog.require('ptp.Unpacker');
 goog.require('ptp.Values');
+goog.require('ptp.Camera');
 
 /**
  * Creates a new Session.
@@ -26,9 +27,8 @@ ptp.Session = function(transport) {
   /**
    * Transport mechanism, probably something like a USB transport layer.
    * @type {Transport}
-   * @private
    */
-  this.transport_ = transport;
+  this.transport = transport;
 
   /**
    * The current session id.
@@ -45,17 +45,21 @@ ptp.Session = function(transport) {
   this.transactionid_ = 0;
 };
 
+ptp.Session.prototype.getSessionId = function() {
+  return this.sessionid_;
+};
+
 /**
  * Opens a new Session with the device.
  * @param {function(boolean)} callback
  */
 ptp.Session.prototype.OpenSession = function(callback) {
-  this.sessionid_ = this.transport_.NewSession();
+  this.sessionid_ = this.transport.NewSession();
   this.transactionid_ = 0;
   var ptpRequest = new ptp.Request(
     ptp.Values.StandardOperations.OPEN_SESSION, this.sessionid_,
     this.transactionid_, [this.sessionid_]);
-  this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
+  this.transport.SimpleTransaction(ptpRequest, {receiving: false},
     function(ptpResponse, rx) {
     callback(ptpResponse &&
              ptpResponse.respcode == ptp.Values.StandardResponses.OK);
@@ -80,7 +84,7 @@ ptp.Session.prototype.GetObjectInfo = function(objectId, callback) {
   var ptpRequest = new ptp.Request(
     ptp.Values.StandardOperations.GET_OBJECT_INFO,
     this.sessionid_, this.NewTransaction(), [objectId]);
-  this.transport_.SimpleTransaction(ptpRequest, {receiving: true},
+  this.transport.SimpleTransaction(ptpRequest, {receiving: true},
     function(ptpResponse, rx_data) {
     if (!ptpResponse) {
       console.log('No PtpResponse Code GetObjectInfo');
@@ -107,12 +111,12 @@ ptp.Session.prototype.GetObject = function(objectId, callback) {
     }
     var ptpRequest = new ptp.Request(ptp.Values.StandardOperations.GET_OBJECT,
       session.sessionid_, session.NewTransaction(), [objectId]);
-    session.transport_.SendRequest(ptpRequest, function(result) {
+    session.transport.SendRequest(ptpRequest, function(result) {
       if (!result) {
         callback(null);
         return;
       }
-      session.transport_.GetData(ptpRequest, function(rx_data) {
+      session.transport.GetData(ptpRequest, function(rx_data) {
         transport.GetResponse(ptpRequest, function(ptpResponse) {
           if (!ptpResponse) {
             console.log('No PtpResponse Code GetObject');
@@ -133,14 +137,14 @@ ptp.Session.prototype.GetObject = function(objectId, callback) {
  * @param {function(Event)} callback
  */
 ptp.Session.prototype.CheckForEvent = function(callback) {
-  this.transport_.CheckEvent(this.sessionid_, callback);
+  this.transport.CheckEvent(this.sessionid_, callback);
 };
 
 ptp.Session.prototype.CheckForEOSEvent = function(callback) {
   var request = new ptp.Request(
     ptp.Values.EOSOperations.GET_EVENT,
     this.sessionid_, this.NewTransaction(), []);
-  this.transport_.SimpleTransaction(request, {receiving: true},
+  this.transport.SimpleTransaction(request, {receiving: true},
     function(ptpResponse, rx) {
       console.log('EOS event response: ' + ptpResponse);
       console.log('EOS event data: ' + rx);
@@ -160,7 +164,7 @@ ptp.Session.prototype.GetDevicePropValue = function(
   var ptpRequest = new ptp.Request(
     ptp.Values.StandardOperations.GET_DEVICE_PROP_VALUE,
     this.sessionid_, this.NewTransaction(), [propertyId]);
-  this.transport_.SimpleTransaction(ptpRequest, {receiving: true},
+  this.transport.SimpleTransaction(ptpRequest, {receiving: true},
     function(ptp_response, rx) {
     if (ptp_response == null) {
       callback(null);
@@ -184,7 +188,7 @@ ptp.Session.prototype.GetDevicePropInfo = function(
   var request = new ptp.Request(
     ptp.Values.StandardOperations.GET_DEVICE_PROP_DESC,
     this.sessionid_, this.NewTransaction(), [propertyId]);
-  this.transport_.SimpleTransaction(request, {receiving: true},
+  this.transport.SimpleTransaction(request, {receiving: true},
     function(response, rx) {
       if (response && response.respcode == ptp.Values.StandardResponses.OK) {
         callback(new ptp.DevicePropertyInfo(rx[1]));
@@ -210,7 +214,7 @@ ptp.Session.prototype.SetDevicePropValue = function(
   var ptpRequest = new ptp.Request(
     ptp.Values.StandardOperations.SET_DEVICE_PROP_VALUE,
     this.sessionid_, this.NewTransaction(), [propertyId]);
-  this.transport_.SimpleTransaction(ptpRequest,
+  this.transport.SimpleTransaction(ptpRequest,
     {receiving: false, data: buffer}, function(ptpResponse, rx) {
     callback(ptpResponse &&
              ptpResponse.respcode != ptp.Values.StandardResponses.OK);
@@ -227,7 +231,7 @@ ptp.Session.prototype.SetEOSDevicePropValue = function(
   var ptpRequest = new ptp.Request(
     ptp.Values.EOSOperations.SET_DEVICE_PROP_VALUE,
     this.sessionid_, this.NewTransaction(), []);
-  this.transport_.SimpleTransaction(ptpRequest,
+  this.transport.SimpleTransaction(ptpRequest,
     {receiving: false, data: buffer}, function(ptpResponse, rx) {
     if (ptpResponse) {
       console.log('ResponseCode: ' + ptpResponse.respcode);
@@ -278,38 +282,6 @@ ptp.Session.prototype.GetDeviceFriendlyName = function(callback) {
 };
 
 /**
- * Initiates a Capture on the device and returns the image data.
- * @param {function(ArrayBuffer)} callback
- */
-ptp.Session.prototype.Capture = function(callback) {
-  var ptpRequest = new ptp.Request(
-    ptp.Values.EOSOperations.CAPTURE,
-    this.sessionid_, this.NewTransaction(), []);
-  var session = this;
-  this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
-    function(ptpResponse, tx) {
-    if (ptpResponse == null) {
-      console.log('No PTPResponse');
-      callback(null);
-    } else if (ptpResponse.respcode != ptp.Values.StandardResponses.OK) {
-      callback(null);
-    } else {
-      console.log('RespCode for Capture:' + ptpResponse.respcode);
-      console.log('About to wait or event');
-      session.CheckForEvent(function(ptpEvent) {
-        if (ptpEvent.eventcode == ptp.Values.StandardEvents.OBJECT_ADDED) {
-          console.log('Event::Object added');
-          var objectId = ptpEvent.params[0];
-          session.GetObject(objectId, callback);
-        } else {
-          callback(null);
-        }
-      });
-    }
-   });
-};
-
-/**
  * Returns small preview(s) from the viewfinder. This method can be used to
  * create something that looks like a video stream or a live preview.
  * @param {function(data)} callback The data will be of the potentially
@@ -322,7 +294,7 @@ ptp.Session.prototype.LiveView = function(callback) {
   /* Found this magic constant from gphoto2. */
   var ptpRequest = new ptp.Request(0x9153,
     session.sessionid_, session.NewTransaction(), [0x00100000]);
-  session.transport_.SimpleTransaction(ptpRequest, {receiving: true},
+  session.transport.SimpleTransaction(ptpRequest, {receiving: true},
     function(response, rx) {
     if (response &&
         response.respcode ==
@@ -343,7 +315,7 @@ ptp.Session.prototype.SetPCConnectMode = function(mode, callback) {
   var ptpRequest = new ptp.Request(
     ptp.Values.EOSOperations.SET_PC_CONNECT_MODE,
     this.sessionid_, this.NewTransaction(), [mode]);
-  this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
+  this.transport.SimpleTransaction(ptpRequest, {receiving: false},
     function(ptpResponse, tx) {
     callback(ptpResponse.respcode == ptp.Values.StandardResponses.OK);
    });
@@ -353,7 +325,7 @@ ptp.Session.prototype.GetDeviceInfo = function(callback) {
   var request = new ptp.Request(
     ptp.Values.StandardOperations.GET_DEVICE_INFO,
     this.sessionid_, this.NewTransaction(), []);
-  this.transport_.SimpleTransaction(request, {receiving: true},
+  this.transport.SimpleTransaction(request, {receiving: true},
     function(response, rx) {
     console.log('Have response from getdevice');
     if (response && response.respcode == ptp.Values.StandardResponses.OK) {
@@ -368,7 +340,7 @@ ptp.Session.prototype.GetEOSDeviceInfo = function(callback) {
   var request = new ptp.Request(
     ptp.Values.EOSOperations.GET_DEVICE_INFO,
     this.sessionid_, this.NewTransaction(), []);
-  this.transport_.SimpleTransaction(request, {receiving: true},
+  this.transport.SimpleTransaction(request, {receiving: true},
     function(response, rx) {
     console.log('Have response from getdevice');
     if (response && response.respcode == ptp.Values.StandardResponses.OK) {
@@ -383,7 +355,7 @@ ptp.Session.prototype.SetEventMode = function(mode, callback) {
   var ptpRequest = new ptp.Request(
     ptp.Values.EOSOperations.SET_EVENT_MODE,
     this.sessionid_, this.NewTransaction(), [mode]);
-  this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
+  this.transport.SimpleTransaction(ptpRequest, {receiving: false},
     function(ptpResponse, tx) {
       callback(ptpResponse.respcode == ptp.Values.StandardResponses.OK);
    });
