@@ -72,3 +72,24 @@ var testCheckEvent = function() {
   assertEquals(result.transactionid, transactionId);
   goog.asserts.assertArray(result.params, []);
 }
+
+/**
+ * Tests a problem with the underlying read. We expect a null value to be
+ * returned.
+ */
+var testCheckEventBadRead = function() {
+  chrome.usb.bulkTransfer = goog.testing.createFunctionMock();
+  var ignored = new goog.testing.mockmatchers.IgnoreArgument();
+  chrome.usb.bulkTransfer(ignored, ignored,
+    goog.testing.mockmatchers.isFunction).$does(function(
+    device, transaction, callback) {
+    callback({resultCode: 1});
+  });
+  chrome.usb.bulkTransfer.$replay();
+  var result = undefined;
+  transport.CheckEvent(0, function(returned) {
+    result = returned;
+  });
+  chrome.usb.bulkTransfer.$verify();
+  assertNull(result);
+}

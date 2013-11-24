@@ -162,6 +162,11 @@ ptp.Session.prototype.GetDevicePropValue = function(
   });
 };
 
+/**
+ * Returns device property information.
+ * @param {number} propertyId
+ * @param {function(ptp.DevicePropertyInfo)} callback
+ */
 ptp.Session.prototype.GetDevicePropInfo = function(
   propertyId, callback) {
   var request = new ptp.Request(
@@ -178,6 +183,13 @@ ptp.Session.prototype.GetDevicePropInfo = function(
    });
 };
 
+/**
+ * Sets the value of a property.
+ * @param {number} propertyId
+ * @param {string} fmt
+ * @param {Object} value
+ * @param {function(boolean)} callback
+ */
 ptp.Session.prototype.SetDevicePropValue = function(
   propertyId, fmt, value, callback) {
   var buffer = new ArrayBuffer(4);
@@ -199,7 +211,7 @@ ptp.Session.prototype.SetEOSDevicePropValue = function(
   var dataView = new DataView(buffer);
   dataView.setUint32(0, value, true);
   var ptpRequest = new ptp.Request(
-    ptp.Values.EOSOperations.SET_EOS_DEVICE_PROP_VALUE,
+    ptp.Values.EOSOperations.SET_DEVICE_PROP_VALUE,
     this.sessionid_, this.NewTransaction(), [propertyId]);
   this.transport_.SimpleTransaction(ptpRequest,
     {receiving: false, data: buffer}, function(ptpResponse, rx) {
@@ -213,17 +225,26 @@ ptp.Session.prototype.SetEOSDevicePropValue = function(
 
 ptp.Session.prototype.GetOutputValue = function(callback) {
   this.GetDevicePropInfo(
-    ptp.Values.EOSProperties.EOS_EVF_OUTPUT_DEVICE, 
+    ptp.Values.EOSProperties.EOS_EVF_OUTPUT_DEVICE,
     function(v) {
-    console.log('value: ' + v);
-    callback(v); 
+    console.log('output value: ' + v);
+    callback(v);
+  });
+};
+
+ptp.Session.prototype.GetCaptureDestination = function(callback) {
+  this.GetDevicePropInfo(
+    ptp.Values.EOSProperties.CAPTURE_DESTINATION,
+    function(v) {
+    console.log('capture destination: ' + v);
+    callback(v);
   });
 };
 
 ptp.Session.prototype.SetOutputValue = function(value, callback) {
   this.SetEOSDevicePropValue(
     ptp.Values.EOSProperties.EOS_EVF_OUTPUT_DEVICE,
-    'H', value, callback); 
+    'H', value, callback);
 };
 
 /**
@@ -242,7 +263,7 @@ ptp.Session.prototype.GetDeviceFriendlyName = function(callback) {
  */
 ptp.Session.prototype.Capture = function(callback) {
   var ptpRequest = new ptp.Request(
-    ptp.Values.EOSOperations.EOS_CAPTURE,
+    ptp.Values.EOSOperations.CAPTURE,
     this.sessionid_, this.NewTransaction(), []);
   var session = this;
   this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
@@ -279,10 +300,12 @@ ptp.Session.prototype.LiveView = function(callback) {
       console.log('No PTPResponse');
       callback(null);
       return;
-    } else if (ptpResponse.respcode == ptp.Values.StandardResponses.OBJECT_NOT_READY) {
+    } else if (ptpResponse.respcode ==
+               ptp.Values.StandardResponses.OBJECT_NOT_READY) {
       console.log('OBject not found');
     } else if (ptpResponse.respcode != ptp.Values.StandardResponses.OK &&
-               ptpResponse.respcode != ptp.Values.StandardResponses.OBJECT_NOT_READY) {
+               ptpResponse.respcode !=
+               ptp.Values.StandardResponses.OBJECT_NOT_READY) {
       console.log('Not OK RespCode for LiveView:' + ptpResponse.respcode);
       callback(null);
     } else {
@@ -303,11 +326,12 @@ ptp.Session.prototype.LiveView = function(callback) {
 
 /**
  * Sets up the device for PC Connect Mode.
+ * @param {number} mode
  * @param {function(boolean)} callback
  */
 ptp.Session.prototype.SetPCConnectMode = function(mode, callback) {
   var ptpRequest = new ptp.Request(
-    ptp.Values.EOSOperations.EOS_SET_PC_CONNECT_MODE,
+    ptp.Values.EOSOperations.SET_PC_CONNECT_MODE,
     this.sessionid_, this.NewTransaction(), [mode]);
   this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
     function(ptpResponse, tx) {
@@ -332,7 +356,7 @@ ptp.Session.prototype.GetDeviceInfo = function(callback) {
 
 ptp.Session.prototype.GetEOSDeviceInfo = function(callback) {
   var request = new ptp.Request(
-    ptp.Values.StandardOperations.GET_EOS_DEVICE_INFO,
+    ptp.Values.EOSOperations.GET_DEVICE_INFO,
     this.sessionid_, this.NewTransaction(), []);
   this.transport_.SimpleTransaction(request, {receiving: true},
     function(response, rx) {
@@ -343,6 +367,16 @@ ptp.Session.prototype.GetEOSDeviceInfo = function(callback) {
       callback(null);
     }
   });
+};
+
+ptp.Session.prototype.SetEventMode = function(mode, callback) {
+  var ptpRequest = new ptp.Request(
+    ptp.Values.EOSOperations.SET_EVENT_MODE,
+    this.sessionid_, this.NewTransaction(), [mode]);
+  this.transport_.SimpleTransaction(ptpRequest, {receiving: false},
+    function(ptpResponse, tx) {
+      callback(ptpResponse.respcode == ptp.Values.StandardResponses.OK);
+   });
 };
 
 goog.exportSymbol('ptp.Session');

@@ -77,5 +77,42 @@ ptp.DevicePropertyInfo = function(buffer) {
   var unpacker = new ptp.Unpacker(buffer);
   this.propertyCode = unpacker.unpackSimpletype(false, 'H');
   this.dataType = unpacker.unpackSimpletype(false, 'H');
-  this.dataType = unpacker.unpackSimpletype(false, 'B');
+  this.getSet = unpacker.unpackSimpletype(false, 'B');
+  var details = ptp.Values.simpleTypeDetailsById[this.dataType];
+  if (details) {
+    var name = details[0];
+    var id = details[1][0];
+    var isArray = details[1][1];
+    var fmt = details[1][2];
+  } else {
+    console.log('No details for data type: ' + this.dataType);
+  }
+  this.factoryDefaultValue = unpacker.unpackSimpletype(isArray, fmt);
+  this.currentValue = unpacker.unpackSimpletype(isArray, fmt);
+  var form = unpacker.unpackSimpletype(false, 'B');
+  this.minimumValue = null;
+  this.maximumValue = null;
+  this.stepSize = null;
+  this.enumeration = null;
+  if (form == 1) {
+    this.minimumValue = unpacker.unpackSimpletype(isArray, fmt);
+    this.maximumValue = unpacker.unpackSimpletype(isArray, fmt);
+    this.stepSize = unpacker.unpackSimpletype(isArray, fmt);
+  } else if (form == 2) {
+    var count = unpacker.unpackSimpletype(false, 'H');
+    this.enumeration = [];
+    for (var i = 0; i < count; i++) {
+      this.enumeration.push(unpacker.unpackSimpletype(isArray, fmt));
+    }
+  }
+};
+
+ptp.DevicePropertyInfo.prototype.toString = function() {
+  var strings = [];
+  for (var key in this) {
+    if (this.hasOwnProperty(key) {
+      strings.push(key + ' : ' + this[key]);
+    }
+  }
+  return strings.join('\n');
 };

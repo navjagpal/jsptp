@@ -44,6 +44,19 @@ ptp.Unpacker.prototype.unpackString_ = function() {
   return s;
 };
 
+/**
+ * Unpacks a single character.
+ * @return {String} String containing single char.
+ * @private
+ */
+ptp.Unpacker.prototype.unpackChar_ = function() {
+  var dataView = new DataView(this.buffer_);
+  var s = String.fromCharCode(
+    dataView.getInt8(this.offset_, true));
+  this.offset_ += 1;
+  return s;
+};
+
 ptp.Unpacker.prototype.unpackUint32_ = function() {
   var dataView = new DataView(this.buffer_);
   var value = dataView.getUint32(this.offset_, true);
@@ -64,7 +77,7 @@ ptp.Unpacker.prototype.unpackArray = function(fmt) {
   var arrayCount = dataView.getUint32(this.offset_, true);
   console.log('Array count: ' + arrayCount);
   this.offset_ += 4;
-  
+
   var outputBuffer = new Array();
   for (var i = 0; i < arrayCount; i++) {
     if (fmt == 'H') {
@@ -91,8 +104,11 @@ ptp.Unpacker.prototype.unpackSimpletype = function(
       return this.unpackUint32_();
     } else if (fmt == '_STR') {
       return this.unpackString_();
+    } else if (fmt == 'B') {
+      return this.unpackChar_();
     }
   }
+  console.log('Unsupported unpack: ' + isArray + ' : ' + fmt);
 };
 
 goog.exportSymbol('ptp.Unpacker');

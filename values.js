@@ -22,7 +22,8 @@ ptp.Values.StandardProperties = {
 };
 
 ptp.Values.EOSProperties = {
-  EOS_EVF_OUTPUT_DEVICE: 0xD1B0
+  EOS_EVF_OUTPUT_DEVICE: 0xD1B0,
+  CAPTURE_DESTINATION: 0xD11C
 };
 
 /**
@@ -43,9 +44,10 @@ ptp.Values.StandardOperations = {
 };
 
 ptp.Values.EOSOperations = {
-  EOS_CAPTURE: 0x910F,
-  EOS_SET_PC_CONNECT_MODE: 0x9114,
-  SET_EOS_DEVICE_PROP_VALUE: 0x9110
+  CAPTURE: 0x910F,
+  SET_PC_CONNECT_MODE: 0x9114,
+  SET_DEVICE_PROP_VALUE: 0x9110,
+  SET_EVENT_MODE: 0x9115
 };
 
 /**
@@ -64,6 +66,20 @@ ptp.Values.StandardResponses = {
   OK: 0x2001,
   DEVICE_PROP_NOT_SUPPORTED: 0x200a,
   OBJECT_NOT_READY: 0xA102
+};
+
+ptp.Values.SimpleTypes = {
+  INT8: [0x0001, false, 'b']
+};
+
+ptp.Values.simpleTypeDetailsById = function(id) {
+  for (var name in ptp.Values.SimpleTypes) {
+    var details = ptp.Values.SimpleTypes[name];
+    if (details[0] == id) {
+      return [name, details];
+    }
+  }
+  return null;
 };
 
 goog.exportSymbol('ptp.Values');
